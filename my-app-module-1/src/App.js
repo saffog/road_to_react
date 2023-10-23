@@ -1,9 +1,6 @@
 import React from 'react';
 import axios from 'axios';
 
-import styles from './App.module.css';
-import { ReactComponent as Check } from './check.svg';
-
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 const useSemiPersistentState = (key, initialState) => {
@@ -103,14 +100,16 @@ const App = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.headlinePrimary}>My Hacker Stories</h1>
+    <div>
+      <h1>My Hacker Stories</h1>
 
       <SearchForm
         searchTerm={searchTerm}
         onSearchInput={handleSearchInput}
         onSearchSubmit={handleSearchSubmit}
       />
+
+      <hr />
 
       {stories.isError && <p>Something went wrong ...</p>}
 
@@ -128,7 +127,7 @@ const SearchForm = ({
   onSearchInput,
   onSearchSubmit,
 }) => (
-  <form onSubmit={onSearchSubmit} className={styles.searchForm}>
+  <form onSubmit={onSearchSubmit}>
     <InputWithLabel
       id="search"
       value={searchTerm}
@@ -138,11 +137,7 @@ const SearchForm = ({
       <strong>Search:</strong>
     </InputWithLabel>
 
-    <button
-      type="submit"
-      disabled={!searchTerm}
-      className={`${styles.button} ${styles.buttonLarge}`}
-    >
+    <button type="submit" disabled={!searchTerm}>
       Submit
     </button>
   </form>
@@ -166,9 +161,7 @@ const InputWithLabel = ({
 
   return (
     <>
-      <label htmlFor={id} className={styles.label}>
-        {children}
-      </label>
+      <label htmlFor={id}>{children}</label>
       &nbsp;
       <input
         ref={inputRef}
@@ -176,7 +169,6 @@ const InputWithLabel = ({
         type={type}
         value={value}
         onChange={onInputChange}
-        className={styles.input}
       />
     </>
   );
@@ -192,23 +184,21 @@ const List = ({ list, onRemoveItem }) =>
   ));
 
 const Item = ({ item, onRemoveItem }) => (
-  <div className={styles.item}>
-    <span style={{ width: '40%' }}>
+  <div>
+    <span>
       <a href={item.url}>{item.title}</a>
     </span>
-    <span style={{ width: '30%' }}>{item.author}</span>
-    <span style={{ width: '10%' }}>{item.num_comments}</span>
-    <span style={{ width: '10%' }}>{item.points}</span>
-    <span style={{ width: '10%' }}>
-      <button
-        type="button"
-        onClick={() => onRemoveItem(item)}
-        className={`${styles.button} ${styles.buttonSmall}`}
-      >
-        <Check height="18px" width="18px" />
+    <span>{item.author}</span>
+    <span>{item.num_comments}</span>
+    <span>{item.points}</span>
+    <span>
+      <button type="button" onClick={() => onRemoveItem(item)}>
+        Dismiss
       </button>
     </span>
   </div>
 );
 
 export default App;
+
+export { storiesReducer, SearchForm, InputWithLabel, List, Item };
