@@ -57,9 +57,9 @@ const App = () => {
     'React'
   );
 
-  const [url, setUrl] = React.useState(
-    `${API_ENDPOINT}${searchTerm}`
-  );
+  const getUrl = searchTerm => `${API_ENDPOINT}${searchTerm}`;
+  
+  const [urls, setUrls] = React.useState([getUrl(searchTerm)]);
 
   const [stories, dispatchStories] = React.useReducer(
     storiesReducer,
@@ -68,10 +68,9 @@ const App = () => {
 
   const handleFetchStories = React.useCallback(async () => {
     dispatchStories({ type: 'STORIES_FETCH_INIT' });
-
     try {
-      const result = await axios.get(url);
-
+      const lastUrl = urls[urls.length - 1];
+      const result = await axios.get(lastUrl);
       dispatchStories({
         type: 'STORIES_FETCH_SUCCESS',
         payload: result.data.hits,
@@ -79,7 +78,7 @@ const App = () => {
     } catch {
       dispatchStories({ type: 'STORIES_FETCH_FAILURE' });
     }
-  }, [url]);
+  }, [urls]);
 
   React.useEffect(() => {
     handleFetchStories();
@@ -96,11 +95,26 @@ const App = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSearchSubmit = event => {
-    setUrl(`${API_ENDPOINT}${searchTerm}`);
+  const handleSearch = searchItem => {
 
+    const urlToAdd = getUrl(searchItem)
+    setUrls(urls.concat(urlToAdd));
+  }
+
+  const handleSearchSubmit = event => {
+    handleSearch(searchTerm);
     event.preventDefault();
   };
+
+  const handleSearchLast = searchTerm => {    
+    handleSearch(searchTerm);
+    setSearchTerm(searchTerm);
+  };
+
+  const removeDuplicates = urls => [...new Set(urls)];
+  const getLastNSearches = (urls,n) => urls.slice(-n-1,-1).map(url => url.replace(API_ENDPOINT,''));
+  const lastSearches = getLastNSearches(removeDuplicates(urls),5);
+
 
   return (
     <div>
@@ -111,9 +125,15 @@ const App = () => {
         onSearchInput={handleSearchInput}
         onSearchSubmit={handleSearchSubmit}
       />
-
       <hr />
-
+      {
+        lastSearches.map( (searchTerm,index) => (
+          <button key={searchTerm+index} type="button" onClick={()=>handleSearchLast(searchTerm)}>
+            {searchTerm}
+          </button>
+        ))
+      }
+      <hr />
       {stories.isError && <p>Something went wrong ...</p>}
 
       {stories.isLoading ? (
