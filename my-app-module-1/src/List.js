@@ -2,25 +2,27 @@ import React from 'react';
 import { sortBy } from 'lodash';
 
 const SORTS = {
-  NONE: (list,isReverse) => list,
-  TITLE: (list,isReverse) => !isReverse ? sortBy(list, 'title') : sortBy(list, 'title').reverse(),
-  AUTHOR: (list,isReverse) => !isReverse ? sortBy(list, 'author') : sortBy(list, 'author').reverse(),
-  COMMENT: (list,isReverse) => !isReverse ? sortBy(list, 'num_comments') : sortBy(list, 'num_comments').reverse(),
-  POINT: (list,isReverse) => !isReverse ? sortBy(list, 'points') : sortBy(list, 'points').reverse(),
+  NONE: list => list,
+  TITLE: list => sortBy(list, 'title'),
+  AUTHOR: list => sortBy(list, 'author'),
+  COMMENT: list => sortBy(list, 'num_comments'),
+  POINT: list => sortBy(list, 'points'),
 };
 
 const List = ({ list, onRemoveItem }) => {
-  const [sort, setSort] = React.useState('NONE');
-  const [isReverse,setIsReverse] = React.useState(false);
+  const [sort, setSort] = React.useState({
+    sortKey :'NONE',
+    isReverse : false
+  });
   
   const handleSort = sortKey => {
-    setSort(sortKey);
-    !isReverse ? setIsReverse(true) : setIsReverse(false);
+    const isReverse = sort.sortKey === sortKey && !sort.isReverse;
     console.log(isReverse);
+    setSort({sortKey, isReverse});
   };
 
-  const sortFunction =  SORTS[sort];
-  const sortedList = sortFunction(list,isReverse);
+  const sortFunction =  SORTS[sort.sortKey];
+  const sortedList = sort.isReverse ? sortFunction(list).reverse() : sortFunction(list);
 
   return (
     <div>
