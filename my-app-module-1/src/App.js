@@ -5,6 +5,7 @@ import SearchForm from './SearchForm';
 import List from './List';
 
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
+const API_PAGE_PARAMETER = '&page=';
 
 const useSemiPersistentState = (key, initialState) => {
   const [value, setValue] = React.useState(
@@ -31,7 +32,8 @@ const storiesReducer = (state, action) => {
         ...state,
         isLoading: false,
         isError: false,
-        data: action.payload,
+        data: action.page === 0 ? action.payload : state.data.concat(action.payload),
+        page: action.page,
       };
     case 'STORIES_FETCH_FAILURE':
       return {
@@ -57,13 +59,13 @@ const App = () => {
     'React'
   );
 
-  const getUrl = searchTerm => `${API_ENDPOINT}${searchTerm}`;
+  const getUrl = (searchTerm,page) => `${API_ENDPOINT}${searchTerm}${API_PAGE_PARAMETER}${page}`;
   
-  const [urls, setUrls] = React.useState([getUrl(searchTerm)]);
+  const [urls, setUrls] = React.useState([getUrl(searchTerm,0)]);
 
   const [stories, dispatchStories] = React.useReducer(
     storiesReducer,
-    { data: [], isLoading: false, isError: false }
+    { data: [], page: 0, isLoading: false, isError: false }
   );
 
   const handleFetchStories = React.useCallback(async () => {
@@ -74,6 +76,7 @@ const App = () => {
       dispatchStories({
         type: 'STORIES_FETCH_SUCCESS',
         payload: result.data.hits,
+        page: result.data.page,
       });
     } catch {
       dispatchStories({ type: 'STORIES_FETCH_FAILURE' });
@@ -95,25 +98,30 @@ const App = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSearch = searchItem => {
+  const handleSearch = (searchItem,page) => {
 
-    const urlToAdd = getUrl(searchItem)
+    const urlToAdd = getUrl(searchItem, page)
     setUrls(urls.concat(urlToAdd));
   }
 
   const handleSearchSubmit = event => {
-    handleSearch(searchTerm);
+    handleSearch(searchTerm,0);
     event.preventDefault();
   };
 
   const handleSearchLast = searchTerm => {    
-    handleSearch(searchTerm);
+    handleSearch(searchTerm,0);
     setSearchTerm(searchTerm);
   };
 
-  const removeDuplicates = urls => [...new Set(urls)];
-  const getLastNSearches = (urls,n) => urls.slice(-n-1,-1).map(url => url.replace(API_ENDPOINT,''));
-  const lastSearches = getLastNSearches(removeDuplicates(urls),5);
+  const removeURLs = (urls) => urls.map(url => url.replace(API_ENDPOINT,'').replace(/(&page=)\d+/i, ''));
+  const removeDuplicates = searches => [...new Set(searches)];
+  const getLastNSearches = (searches,n) => searches.slice(-n-1,-1);
+  const lastSearches = getLastNSearches(removeDuplicates(removeURLs(urls)),5);
+
+  const handleMore = () => { 
+    handleSearch(searchTerm, stories.page+1);
+  };
 
 
   return (
@@ -135,11 +143,17 @@ const App = () => {
       }
       <hr />
       {stories.isError && <p>Something went wrong ...</p>}
-
+      <div>
+        <List list={stories.data} onRemoveItem={handleRemoveStory} />
+      </div>
       {stories.isLoading ? (
         <p>Loading ...</p>
       ) : (
-        <List list={stories.data} onRemoveItem={handleRemoveStory} />
+        <div>
+          <button type="button" onClick={handleMore}>
+            More
+          </button>
+        </div>
       )}
     </div>
   );
